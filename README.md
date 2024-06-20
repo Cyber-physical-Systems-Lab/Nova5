@@ -7,7 +7,7 @@ To run the Dobot Nova5 robot with psycological experiments:
 
 `-- mistake` or `--no-mistake` specifies if mistakes exsit in the block
 
-`--task_time` specifies the time waiting at the home spot
+`--task_time` specifies the `float` time waiting at the home spot
 
 ```
 python3 tcp_client.py --block 4 --mistake --task_time 5
