@@ -12,3 +12,5 @@ To run the Dobot Nova5 robot with psycological experiments:
 ```
 python3 tcp_client.py --block 4 --mistake --task_time 5
 ```
+
+Go to the same location with the python scipt, you could find the csv data
