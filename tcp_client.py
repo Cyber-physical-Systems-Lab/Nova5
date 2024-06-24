@@ -15,6 +15,7 @@ trajectory_map = {1: True, 2: False, 3: True, 4: False}
 def custom_print(sequence):
     #print("Generated sequence for experiment: ")
     # Print the color and trajectory based on the number
+    
     for num in sequence:
         color = color_map[num]
         trajectory = trajectory_map[num]
@@ -182,6 +183,7 @@ def main(*args, **kwargs):
     data_send = str(len_trial) + "," + bits + "," + str(wait_time)
 
     input("When you are ready placed the cubes, press ENTER")
+    start_t = time.time()
     try: 
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.connect((host, port))
@@ -209,7 +211,8 @@ def main(*args, **kwargs):
             print("Received 'finished' message, closing connection.")
             process_and_save_data(received_data, seq_log)
             break
-
+    time_used = time.time() - start_t
+    print("This block takes", time_used, "seconds!")
     client_socket.close()
 
 if __name__ == "__main__":
