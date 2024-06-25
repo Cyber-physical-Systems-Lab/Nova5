@@ -106,8 +106,10 @@ def tcp_send_received(data, seq_log, text_widget):
     time_used = time.time() - start_t
     print("This block takes", time_used, "seconds!")
     client_socket.close()
+    message = f"{clicked_button_label} finished using {time_used} seconds!\n"
     text_widget.config(state=tk.NORMAL)  # Make the widget editable
-    text_widget.insert(tk.END, clicked_button_label +"finished using " + str(time_used), "seconds!\n")
+    text_widget.insert(tk.END, message)
+    text_widget.see(tk.END)  # Scroll to the bottom
     text_widget.config(state=tk.DISABLED)  # Make the widget read-only
 
 def get_current_date():
@@ -198,8 +200,9 @@ def on_button_click(num_block, wait_time, text_widget, button_label, start_butto
     clicked_button_label = button_label
 
     text_widget.config(state=tk.NORMAL)  # Make the widget editable
-    text_widget.delete(1.0, tk.END)  # Clear the widget
-    text_widget.insert(tk.END, "You have selected " + clicked_button_label + " to play!\n")
+    #text_widget.delete(1.0, tk.END)  # Clear the widget
+    text_widget.insert(tk.END, "\n")
+    text_widget.insert(tk.END, "you have selected " + clicked_button_label + " to play!\n")
     text_widget.config(state=tk.DISABLED)  # Make the widget read-only
     data_send, seq_log = seq_radom(num_block, wait_time, text_widget)
     text_widget.config(state=tk.NORMAL)  # Make the widget editable
