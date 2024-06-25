@@ -143,11 +143,6 @@ def seq_radom(num_block, wait_time, text_widget):
     len_trial = len(seq)
     half_trial = int(len_trial/2)
 
-    text_widget.config(state=tk.NORMAL)  # Make the widget editable
-    #text_widget.insert(tk.END, "\n")
-    text_widget.delete(1.0, tk.END)  # Clear the widget
-    text_widget.config(state=tk.DISABLED)
-
     seq_up = seq[0 : half_trial]
     seq_up.reverse()
     seq_bottom = seq[half_trial : len_trial+1]
@@ -188,6 +183,10 @@ def on_button_click(num_block, wait_time, text_widget, button_label, start_butto
     global clicked_button_label
     clicked_button_label = button_label
 
+    text_widget.config(state=tk.NORMAL)  # Make the widget editable
+    text_widget.delete(1.0, tk.END)  # Clear the widget
+    text_widget.insert(tk.END, "You have selected " + clicked_button_label + " to play!\n")
+    text_widget.config(state=tk.DISABLED)  # Make the widget read-only
     data_send, seq_log = seq_radom(num_block, wait_time, text_widget)
     text_widget.config(state=tk.NORMAL)  # Make the widget editable
     text_widget.insert(tk.END, "Press start when you are ready!\n", "yellow")
