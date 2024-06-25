@@ -3,6 +3,7 @@ import random
 import time
 import csv
 import datetime
+import os
 from tkinter import scrolledtext
 import tkinter as tk
 
@@ -67,7 +68,10 @@ def gen_seq(num_block):
 
     return sequence
 
-def tcp_send_received(data, seq_log):
+def tcp_send_received(data, seq_log, text_widget):
+    text_widget.config(state=tk.NORMAL)  # Make the widget editable
+    text_widget.insert(tk.END, "Starting actions for " + clicked_button_label +"!\n")
+    text_widget.config(state=tk.DISABLED)  # Make the widget read-only
     start_t = time.time()
     try: 
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -95,12 +99,16 @@ def tcp_send_received(data, seq_log):
         if data_recv.decode('utf-8') == "ff":
             #print("received_data", received_data)
             print("Received 'finished' message, closing connection.")
+            print(received_data)
             process_and_save_data(received_data, seq_log)
             break
 
     time_used = time.time() - start_t
     print("This block takes", time_used, "seconds!")
     client_socket.close()
+    text_widget.config(state=tk.NORMAL)  # Make the widget editable
+    text_widget.insert(tk.END, clicked_button_label +"finished using " + str(time_used), "seconds!\n")
+    text_widget.config(state=tk.DISABLED)  # Make the widget read-only
 
 def get_current_date():
     return datetime.datetime.now().strftime("%Y-%m-%d")
@@ -119,6 +127,12 @@ def log_start_time(filename):
 
 def process_and_save_data(received_data, seq_log):
     data_filename = f"data_{get_current_date()}.csv"
+
+    # Check if the file exists to avoid permission issues
+    if not os.path.exists(data_filename):
+        with open(data_filename, 'w', newline='') as csvfile:
+            pass  # Just create the file
+
     log_start_time(data_filename) 
 
     # Assuming the data format is ['name', 'value', 'finished']
@@ -194,10 +208,7 @@ def on_button_click(num_block, wait_time, text_widget, button_label, start_butto
     text_widget.config(state=tk.DISABLED)  # Make the widget read-only
 
     def start_button_action():
-        text_widget.config(state=tk.NORMAL)  # Make the widget editable
-        text_widget.insert(tk.END, "Starting actions for " + clicked_button_label +"!\n")
-        text_widget.config(state=tk.DISABLED)  # Make the widget read-only
-        tcp_send_received(data_send, seq_log)
+        tcp_send_received(data_send, seq_log, text_widget)
         
     start_button.config(text=f"Start {button_label}", command=start_button_action)
     start_button.pack(pady=5)
