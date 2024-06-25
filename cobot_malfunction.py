@@ -3,8 +3,6 @@ import random
 import time
 import csv
 import datetime
-import argparse
-from colorama import Back, Fore, Style
 from tkinter import scrolledtext
 import tkinter as tk
 
@@ -70,6 +68,7 @@ def gen_seq(num_block):
     return sequence
 
 def tcp_send_received(data, seq_log):
+    start_t = time.time()
     try: 
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.connect((host, port))
@@ -99,6 +98,8 @@ def tcp_send_received(data, seq_log):
             process_and_save_data(received_data, seq_log)
             break
 
+    time_used = time.time() - start_t
+    print("This block takes", time_used, "seconds!")
     client_socket.close()
 
 def get_current_date():
@@ -143,7 +144,8 @@ def seq_radom(num_block, wait_time, text_widget):
     half_trial = int(len_trial/2)
 
     text_widget.config(state=tk.NORMAL)  # Make the widget editable
-    text_widget.insert(tk.END, "\n")
+    #text_widget.insert(tk.END, "\n")
+    text_widget.delete(1.0, tk.END)  # Clear the widget
     text_widget.config(state=tk.DISABLED)
 
     seq_up = seq[0 : half_trial]
