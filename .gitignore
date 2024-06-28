@@ -36,3 +36,6 @@
 
 # vscode setting
 .vscode
+
+# Cache file of vim
+*.swp
