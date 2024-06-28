@@ -4,15 +4,18 @@ import time
 import csv
 import datetime
 import os
+import cv2
+import threading
 from tkinter import scrolledtext
 import tkinter as tk
 
+task_time = 4.0
 button_params = [
-    {'text': 'Baseline', 'num_block': 1, 'wait_time': 5.0},
-    {'text': 'Practice', 'num_block': 2, 'wait_time': 5.0},
-    {'text': 'Block 1', 'num_block': 3, 'wait_time': 5.0},
-    {'text': 'Block 2', 'num_block': 4, 'wait_time': 5.0},
-    {'text': 'Block 3', 'num_block': 5, 'wait_time': 5.0},
+    {'text': 'Baseline', 'num_block': 1, 'wait_time': task_time},
+    {'text': 'Practice', 'num_block': 2, 'wait_time': task_time},
+    {'text': 'Block 1', 'num_block': 3, 'wait_time': task_time},
+    {'text': 'Block 2', 'num_block': 4, 'wait_time': task_time},
+    {'text': 'Block 3', 'num_block': 5, 'wait_time': task_time},
 ]
 
 host = '192.168.0.37'
@@ -22,7 +25,48 @@ color_map = {1: "Green", 2: "Green", 3: "Red", 4: "Red"}
 trajectory_map = {1: True, 2: False, 3: True, 4: False}
 # Global variable to store the clicked button's label
 clicked_button_label = None
- 
+
+# Define a stop event for threading
+stop_event = threading.Event()
+app = tk.Tk()
+
+def video_recording():
+    # Define the codec and create VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Codec used to compress the frames
+    out = cv2.VideoWriter(f'data_{get_current_time()}.avi', fourcc, 30.0, (2560, 1440))  # Output file, codec, frames per second, and frame size
+
+    # Initialize the camera
+    cap = cv2.VideoCapture(4)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 2560)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1440)
+    cap.set(cv2.CAP_PROP_FPS, 30)
+    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+
+
+    if not cap.isOpened():
+        print("Error: Cannot open camera.")
+        return
+    while not stop_event.is_set():
+        # Capture frame-by-frame
+        ret, frame = cap.read()
+
+        if not ret:
+            print("Can't receive frame (stream end?). Exiting ...")
+            break
+        
+        # Our operations on the frame come here
+        # Write the frame into the file 'output.avi'
+        out.write(frame)
+
+        # Display the resulting frame
+        #cv2.imshow('frame', frame)
+
+    # When everything done, release the capture
+    cap.release()
+    out.release()
+    cv2.destroyAllWindows()
+    print("Video recording stopped and resources released.")
+
 def custom_print(sequence, text_widget):
     text_widget.config(state=tk.NORMAL)  # Make the widget editable
     text_widget.insert(tk.END, "left ")
@@ -106,6 +150,13 @@ def tcp_send_received(data, seq_log, text_widget):
     time_used = time.time() - start_t
     print("This block takes", time_used, "seconds!")
     client_socket.close()
+    
+    filename = f"data_{get_current_date()}.csv"
+    with open(filename, 'a', newline='') as csvfile:
+        csv_writer = csv.writer(csvfile)
+        csv_writer.writerow([f'Experiment {clicked_button_label} finished using {time_used} seconds'])
+        csv_writer.writerow(column_names)
+
     message = f"{clicked_button_label} finished using {time_used} seconds!\n"
     text_widget.config(state=tk.NORMAL)  # Make the widget editable
     text_widget.insert(tk.END, message)
@@ -216,15 +267,27 @@ def on_button_click(num_block, wait_time, text_widget, button_label, start_butto
     start_button.config(text=f"Start {button_label}", command=start_button_action)
     start_button.pack(pady=5)
 
+def on_close():
+    print("Stopping recording and closing application...")
+    stop_event.set()  # Signal the recording thread to stop
+    app.destroy()  # Close the tkinter window
+
+
 def main():
     global start_button
     # Create the main window
-    app = tk.Tk()
     app.title("Cobot Malfunction Experiment GUI")
+    
+    # Set up the protocol for the window close button (X button)
+    app.protocol("WM_DELETE_WINDOW", on_close)
 
     # Create a label to display messages
     label = tk.Label(app, text="Choose which block you want to run!")
     label.pack(pady=10)
+
+    # Set up and start the video recording thread
+    video_thread = threading.Thread(target=video_recording, args=())
+    video_thread.start()
 
     # Create a scrolled text widget for displaying output
     text_widget = scrolledtext.ScrolledText(app, wrap=tk.WORD, width=60, height=20)
@@ -235,6 +298,7 @@ def main():
     text_widget.config(state=tk.DISABLED)  # Make the widget read-only
     
     text_widget.config(state=tk.NORMAL)  # Make the widget editable
+    text_widget.insert(tk.END, "Recording started!!!\n")
     text_widget.insert(tk.END, "Please select one block to begin with\n")
     text_widget.config(state=tk.DISABLED)  # Make the widget read-only
     # Create the start button but don't pack it yet
@@ -247,8 +311,8 @@ def main():
 
     # Run the application
     app.mainloop()
-    #input("When you are ready placed the cubes, press ENTER")
-    
+
+    video_thread.join()  # Ensure the video recording thread has finished
 
 if __name__ == "__main__":
     main()
