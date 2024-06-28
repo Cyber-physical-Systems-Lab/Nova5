@@ -2,10 +2,15 @@ import cv2
 
 # Define the codec and create VideoWriter object
 fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Codec used to compress the frames
-out = cv2.VideoWriter('output.avi', fourcc, 20.0, (640, 480))  # Output file, codec, frames per second, and frame size
+out = cv2.VideoWriter('output.avi', fourcc, 30.0, (1920, 1080))  # Output file, codec, frames per second, and frame size
 
 # Initialize the camera
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(4)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+cap.set(cv2.CAP_PROP_FPS, 30)
+cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+
 
 if not cap.isOpened():
     print("Error: Cannot open camera.")
