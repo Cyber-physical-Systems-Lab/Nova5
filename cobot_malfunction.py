@@ -30,12 +30,16 @@ clicked_button_label = None
 stop_event = threading.Event()
 app = tk.Tk()
 
+# Global variable to store the clicked button's label
+clicked_button_label = None
+
 def video_recording():
     index, width, height = [0,1920,1080]
     
     # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Codec used to compress the frames
-    out = cv2.VideoWriter(f'video_{get_current_time()}.avi', fourcc, 30.0, (width, height))  # Output file, codec, frames per second, and frame size
+    filename = f'video_{get_current_time()}.avi'
+    out = cv2.VideoWriter(filename, fourcc, 30.0, (width, height))  # Output file, codec, frames per second, and frame size
 
     # Initialize the camera
     cap = cv2.VideoCapture(index)
@@ -50,9 +54,10 @@ def video_recording():
         print("Error: Cannot open camera.")
         return
     
-    while time.time() - time_start < 300 or not stop_event.is_set():
+    while time.time() - time_start < 300 and not stop_event.is_set():
         # record for 300 seconds
         # Capture frame-by-frame
+        
         ret, frame = cap.read()
 
         if not ret:
@@ -65,15 +70,19 @@ def video_recording():
 
         # Display the resulting frame
         #cv2.imshow('frame', frame)
+    
+    elapsed_time = time.time() - time_start
 
+    if elapsed_time < 100:
+        print(f"Recording was too short ({elapsed_time:.2f} seconds). Deleting file: {filename}")
+        os.remove(filename)
+    else:
+        print(f"Recording saved: {filename}")
     # When everything done, release the capture
     cap.release()
     out.release()
     cv2.destroyAllWindows()
     print("Video recording stopped and resources released.")
-
-# Set up and start the video recording thread
-video_thread = threading.Thread(target=video_recording, args=())
 
 def custom_print(sequence, text_widget):
     text_widget.config(state=tk.NORMAL)  # Make the widget editable
@@ -135,11 +144,17 @@ def tcp_send_received(data, seq_log, text_widget):
 
     except Exception as e:
         print(f"An error occurred: {e}")
+        return
 
     data_str = []
     received_data = []
     while True:
-        data_recv = client_socket.recv(1024)
+        try: 
+            data_recv = client_socket.recv(1024)
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return
+        
         if data_recv is not None:
             data_str.append(data_recv.decode('utf-8'))
 
@@ -272,10 +287,14 @@ def on_button_click(num_block, wait_time, text_widget, button_label, start_butto
     def start_button_action():
         stop_event.clear()  # Reset stop event in case it was set
         if num_block > 2:
+            # Set up and start the video recording thread
+            video_thread = threading.Thread(target=video_recording, args=())
             video_thread.start()
         tcp_send_received(data_send, seq_log, text_widget)
+        
         if video_thread.is_alive():
             stop_event.set()  # Ensure the video recording thread has finished
+            video_thread.join()
 
     start_button.config(text=f"Start {button_label}", command=start_button_action)
     start_button.pack(pady=5)

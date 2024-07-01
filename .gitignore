@@ -39,3 +39,7 @@
 
 # Cache file of vim
 *.swp
+
+# Video file
+*.avi
+*.mp4
