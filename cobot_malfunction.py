@@ -31,22 +31,27 @@ stop_event = threading.Event()
 app = tk.Tk()
 
 def video_recording():
+    index, width, height = [0,1920,1080]
+    
     # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Codec used to compress the frames
-    out = cv2.VideoWriter(f'data_{get_current_time()}.avi', fourcc, 30.0, (2560, 1440))  # Output file, codec, frames per second, and frame size
+    out = cv2.VideoWriter(f'video_{get_current_time()}.avi', fourcc, 30.0, (width, height))  # Output file, codec, frames per second, and frame size
 
     # Initialize the camera
-    cap = cv2.VideoCapture(4)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 2560)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1440)
+    cap = cv2.VideoCapture(index)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
     cap.set(cv2.CAP_PROP_FPS, 30)
     cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
 
+    time_start = time.time()
 
     if not cap.isOpened():
         print("Error: Cannot open camera.")
         return
-    while not stop_event.is_set():
+    
+    while time.time() - time_start < 300 or not stop_event.is_set():
+        # record for 300 seconds
         # Capture frame-by-frame
         ret, frame = cap.read()
 
@@ -66,6 +71,9 @@ def video_recording():
     out.release()
     cv2.destroyAllWindows()
     print("Video recording stopped and resources released.")
+
+# Set up and start the video recording thread
+video_thread = threading.Thread(target=video_recording, args=())
 
 def custom_print(sequence, text_widget):
     text_widget.config(state=tk.NORMAL)  # Make the widget editable
@@ -155,7 +163,6 @@ def tcp_send_received(data, seq_log, text_widget):
     with open(filename, 'a', newline='') as csvfile:
         csv_writer = csv.writer(csvfile)
         csv_writer.writerow([f'Experiment {clicked_button_label} finished using {time_used} seconds'])
-        csv_writer.writerow(column_names)
 
     message = f"{clicked_button_label} finished using {time_used} seconds!\n"
     text_widget.config(state=tk.NORMAL)  # Make the widget editable
@@ -249,7 +256,8 @@ def seq_radom(num_block, wait_time, text_widget):
 def on_button_click(num_block, wait_time, text_widget, button_label, start_button):
     global clicked_button_label
     clicked_button_label = button_label
-
+    
+    stop_event.set()
     text_widget.config(state=tk.NORMAL)  # Make the widget editable
     #text_widget.delete(1.0, tk.END)  # Clear the widget
     text_widget.insert(tk.END, "\n")
@@ -260,10 +268,15 @@ def on_button_click(num_block, wait_time, text_widget, button_label, start_butto
     text_widget.insert(tk.END, "Press start when you are ready!\n", "yellow")
     text_widget.see(tk.END)  # Scroll to the bottom
     text_widget.config(state=tk.DISABLED)  # Make the widget read-only
-
+    
     def start_button_action():
+        stop_event.clear()  # Reset stop event in case it was set
+        if num_block > 2:
+            video_thread.start()
         tcp_send_received(data_send, seq_log, text_widget)
-        
+        if video_thread.is_alive():
+            stop_event.set()  # Ensure the video recording thread has finished
+
     start_button.config(text=f"Start {button_label}", command=start_button_action)
     start_button.pack(pady=5)
 
@@ -284,10 +297,6 @@ def main():
     # Create a label to display messages
     label = tk.Label(app, text="Choose which block you want to run!")
     label.pack(pady=10)
-
-    # Set up and start the video recording thread
-    video_thread = threading.Thread(target=video_recording, args=())
-    video_thread.start()
 
     # Create a scrolled text widget for displaying output
     text_widget = scrolledtext.ScrolledText(app, wrap=tk.WORD, width=60, height=20)
@@ -312,7 +321,6 @@ def main():
     # Run the application
     app.mainloop()
 
-    video_thread.join()  # Ensure the video recording thread has finished
 
 if __name__ == "__main__":
     main()
