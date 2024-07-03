@@ -286,9 +286,10 @@ def on_button_click(num_block, wait_time, text_widget, button_label, start_butto
     
     def start_button_action():
         stop_event.clear()  # Reset stop event in case it was set
+        # Set up and start the video recording thread
+        video_thread = threading.Thread(target=video_recording, args=())
+
         if num_block > 2:
-            # Set up and start the video recording thread
-            video_thread = threading.Thread(target=video_recording, args=())
             video_thread.start()
         tcp_send_received(data_send, seq_log, text_widget)
         
