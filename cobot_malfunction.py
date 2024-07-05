@@ -23,6 +23,11 @@ port = 8888
 # Define the color and trajectory mappings
 color_map = {1: "Green", 2: "Green", 3: "Red", 4: "Red"}
 trajectory_map = {1: True, 2: False, 3: True, 4: False}
+
+# data path
+data_dir = '/home/cpslab/Nova5/data'
+video_dir = '/home/cpslab/Nova5/video'
+
 # Global variable to store the clicked button's label
 clicked_button_label = None
 
@@ -39,7 +44,9 @@ def video_recording():
     # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Codec used to compress the frames
     filename = f'video_{get_current_time()}.avi'
-    out = cv2.VideoWriter(filename, fourcc, 30.0, (width, height))  # Output file, codec, frames per second, and frame size
+    full_path = os.path.join(video_dir, filename)
+
+    out = cv2.VideoWriter(full_path, fourcc, 30.0, (width, height))  # Output file, codec, frames per second, and frame size
 
     # Initialize the camera
     cap = cv2.VideoCapture(index)
@@ -75,7 +82,7 @@ def video_recording():
 
     if elapsed_time < 100:
         print(f"Recording was too short ({elapsed_time:.2f} seconds). Deleting file: {filename}")
-        os.remove(filename)
+        os.remove(full_path)
     else:
         print(f"Recording saved: {filename}")
     # When everything done, release the capture
@@ -194,18 +201,20 @@ def get_current_time():
 def log_start_time(filename):
     current_time = get_current_time()
     column_names = ["Trial no.", "Operation time", "Color", "Trajectory", "T/F"]
+    full_path = os.path.join(data_dir, filename)
     #print(current_time, column_names)
-    with open(filename, 'a', newline='') as csvfile:
+    with open(full_path, 'a', newline='') as csvfile:
         csv_writer = csv.writer(csvfile)
         csv_writer.writerow(['Experiment block start time', current_time])
         csv_writer.writerow(column_names)
 
 def process_and_save_data(received_data, seq_log):
     data_filename = f"data_{get_current_date()}.csv"
+    full_path = os.path.join(data_dir, data_filename)
 
     # Check if the file exists to avoid permission issues
-    if not os.path.exists(data_filename):
-        with open(data_filename, 'w', newline='') as csvfile:
+    if not os.path.exists(full_path):
+        with open(full_path, 'w', newline='') as csvfile:
             pass  # Just create the file
 
     log_start_time(data_filename) 
@@ -223,7 +232,7 @@ def process_and_save_data(received_data, seq_log):
         
         data_to_csv=[name,value,color,traj,TF]
         #print(data_to_csv)
-        with open(data_filename, 'a', newline='') as csvfile:
+        with open(full_path, 'a', newline='') as csvfile:
             csv_writer = csv.writer(csvfile)
             csv_writer.writerow(data_to_csv)
     
