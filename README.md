@@ -12,5 +12,9 @@ To run the Dobot Nova5 robot with psycological experiments:
 ```
 python3 tcp_client.py --block 4 --mistake --task_time 5
 ```
+OR using it with a simple gui
 
-Go to the same location with the python scipt, you could find the csv data
+```
+python3 cobot_malfunction.py
+```
+Go to the same location with the python scipt with a subfolder of `data`, you could find the csv data. Besides, the video is also stored under `video` subforlder

@@ -18,11 +18,14 @@ button_params = [
     {'text': 'Block 3', 'num_block': 5, 'wait_time': task_time},
 ]
 
-host = '192.168.0.37'
+host = '130.238.16.153' #130.238.16.37
 port = 8888
 # Define the color and trajectory mappings
 color_map = {1: "Green", 2: "Green", 3: "Red", 4: "Red"}
 trajectory_map = {1: True, 2: False, 3: True, 4: False}
+
+# Define the URL of the online video stream
+video_stream_url = "http://130.238.16.153:15048/videostream.cgi?loginuse=admin&loginpas=admin"
 
 # data path
 data_dir = '/home/cpslab/Nova5/data'
@@ -39,21 +42,21 @@ app = tk.Tk()
 clicked_button_label = None
 
 def video_recording():
-    index, width, height = [0,1920,1080]
+    index, width, height = [0,640,480]
     
     # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Codec used to compress the frames
-    filename = f'video_{get_current_time()}.avi'
+    filename = f'{get_current_date()}/video_{get_current_time()}.avi'
     full_path = os.path.join(video_dir, filename)
 
-    out = cv2.VideoWriter(full_path, fourcc, 30.0, (width, height))  # Output file, codec, frames per second, and frame size
+    out = cv2.VideoWriter(full_path, fourcc, 60.0, (width, height))  # Output file, codec, frames per second, and frame size
 
     # Initialize the camera
-    cap = cv2.VideoCapture(index)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-    cap.set(cv2.CAP_PROP_FPS, 30)
-    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+    cap = cv2.VideoCapture(video_stream_url)
+#    cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+#    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+#    cap.set(cv2.CAP_PROP_FPS, 30)
+#    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
 
     time_start = time.time()
 
@@ -179,12 +182,8 @@ def tcp_send_received(data, seq_log, text_widget):
 
     time_used = time.time() - start_t
     print("This block takes", time_used, "seconds!")
+    log_elapsed_time(time_used)
     client_socket.close()
-    
-    filename = f"data_{get_current_date()}.csv"
-    with open(filename, 'a', newline='') as csvfile:
-        csv_writer = csv.writer(csvfile)
-        csv_writer.writerow([f'Experiment {clicked_button_label} finished using {time_used} seconds'])
 
     message = f"{clicked_button_label} finished using {time_used} seconds!\n"
     text_widget.config(state=tk.NORMAL)  # Make the widget editable
@@ -235,7 +234,14 @@ def process_and_save_data(received_data, seq_log):
         with open(full_path, 'a', newline='') as csvfile:
             csv_writer = csv.writer(csvfile)
             csv_writer.writerow(data_to_csv)
-    
+
+def log_elapsed_time(time_used):
+    filename = f"data_{get_current_date()}.csv"
+    full_path = os.path.join(data_dir, filename)
+    with open(full_path, 'a', newline='') as csvfile:
+        csv_writer = csv.writer(csvfile)
+        csv_writer.writerow([f'Experiment {clicked_button_label} finished using {time_used} seconds'])
+
 def seq_radom(num_block, wait_time, text_widget):
     seq = gen_seq(num_block)
     len_trial = len(seq)
