@@ -3,6 +3,7 @@
 
 # Data files
 *.csv
+*.xlsx
 
 # Compiled Object files
 *.slo
