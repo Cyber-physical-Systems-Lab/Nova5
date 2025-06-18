@@ -77,7 +77,8 @@ def process_video(video_path, crop_x, crop_y, crop_w, crop_h):
                 "Happy": emotion.get("happy", ""),
                 "Neutral": emotion.get("neutral", ""),
                 "Sad": emotion.get("sad", ""),
-                "Surprise": emotion.get("surprise", "")
+                "Surprise": emotion.get("surprise", ""),
+                "Dominant": emo
             })
 
         except Exception as e:
@@ -91,7 +92,8 @@ def process_video(video_path, crop_x, crop_y, crop_w, crop_h):
                 "Happy": "",
                 "Neutral": "",
                 "Sad": "",
-                "Surprise": ""
+                "Surprise": "",
+                "Dominant": "Unknown"
             })
 
         # Optional: Show frame (press 'q' to stop early)
